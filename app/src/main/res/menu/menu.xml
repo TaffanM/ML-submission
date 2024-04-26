@@ -10,4 +10,12 @@
         android:iconTint="@color/primaryColor"
         app:showAsAction="always"/>
 
+    <item
+        android:id="@+id/news"
+        android:title=""
+        android:contentDescription="@string/news"
+        android:icon="@drawable/round_explore_24"
+        android:iconTint="@color/primaryColor"
+        app:showAsAction="always"/>
+
 </menu>

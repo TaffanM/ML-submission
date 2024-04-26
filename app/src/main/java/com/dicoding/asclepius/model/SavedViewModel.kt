@@ -9,8 +9,7 @@ import com.dicoding.asclepius.repository.SavedRepository
 import kotlinx.coroutines.launch
 
 class SavedViewModel(private val savedRepository: SavedRepository): ViewModel() {
-    private val _isLoading = MutableLiveData<Boolean>()
-    val isLoading: LiveData<Boolean> = _isLoading
+
 
     fun getSavedData() = savedRepository.getAllData()
 
