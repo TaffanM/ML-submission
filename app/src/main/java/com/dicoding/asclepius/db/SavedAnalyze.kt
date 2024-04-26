@@ -10,6 +10,8 @@ import kotlinx.parcelize.Parcelize
 @Parcelize
 data class SavedAnalyze (
     @PrimaryKey(autoGenerate = true)
+    @field:ColumnInfo(name = "id")
+    var id: Int = 0,
 
     @field:ColumnInfo(name = "image")
     var image: String = "",

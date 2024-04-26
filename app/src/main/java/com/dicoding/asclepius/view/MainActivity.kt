@@ -1,19 +1,20 @@
 package com.dicoding.asclepius.view
 
 import android.content.Intent
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.Menu
-import android.view.View
+import android.view.MenuItem
 import android.widget.Toast
 import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.RequiresExtension
 import com.canhub.cropper.CropImageContract
+import com.canhub.cropper.CropImageContractOptions
+import com.canhub.cropper.CropImageOptions
 import com.canhub.cropper.CropImageView
 import com.dicoding.asclepius.R
 import com.dicoding.asclepius.databinding.ActivityMainBinding
@@ -24,6 +25,7 @@ import java.text.NumberFormat
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
     private lateinit var imageClassifierHelper: ImageClassifierHelper
+    private lateinit var cropImageView: CropImageView
 
     private var currentImageUri: Uri? = null
 
@@ -36,12 +38,19 @@ class MainActivity : AppCompatActivity() {
 
         getSupportActionBar()?.setDisplayShowTitleEnabled(false)
 
+        cropImageView = binding.cropImageView
+
         binding.galleryButton.setOnClickListener {
             startGallery()
         }
 
         binding.analyzeButton.setOnClickListener {
-            analyzeImage()
+            if (currentImageUri != null) {
+                analyzeImage()
+            } else {
+                showToast("No Image to Analyze")
+            }
+
         }
     }
 
@@ -49,30 +58,38 @@ class MainActivity : AppCompatActivity() {
         launcherGallery.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
     }
 
-
-//    private val launcherCropImage = registerForActivityResult(CropImageContract()) { result ->
-//        if (result.isSuccessful) {
-//            val croppedImageUri = result.uriContent ?: return@registerForActivityResult
-//            currentImageUri = croppedImageUri
-//            showImage()
-//        } else {
-//            showToast("Image cropping failed")
-//        }
-//    }
-
     private val launcherGallery = registerForActivityResult(
         ActivityResultContracts.PickVisualMedia()
-    ) {uri: Uri? ->
+    ) { uri: Uri? ->
         if (uri != null) {
-            currentImageUri = uri
-            showImage()
-        } else {
+            croppedImageLauncher.launch(
+                CropImageContractOptions(
+                    uri,
+                    CropImageOptions(
+                        imageSourceIncludeGallery = true,
+                        allowRotation = true,
+                        allowFlipping = true,
+                        allowCounterRotation = true,
+                        guidelines = CropImageView.Guidelines.OFF
+                    )
+                )
+            )
+        } else if (currentImageUri == null) {
             showToast("No media selected")
         }
     }
 
+    private val croppedImageLauncher = registerForActivityResult(CropImageContract()) {result ->
+        if (result.isSuccessful) {
+            val croppedUri = result.uriContent
+            currentImageUri = croppedUri
+            showImage()
+        } else {
+            showToast("Cropping failed: ${result.error}")
+        }
+    }
+
     private fun showImage() {
-        // TODO: Menampilkan gambar sesuai Gallery yang dipilih.
         currentImageUri?.let {
             Log.d("Image URI", "showImage: $it")
             binding.previewImageView.setImageURI(it)
@@ -116,6 +133,23 @@ class MainActivity : AppCompatActivity() {
         intent.putExtra(ResultActivity.EXTRA_IMAGE_URI, currentImageUri.toString())
         intent.putExtra(ResultActivity.EXTRA_RESULT, displayResult)
         startActivity(intent)
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        when (item.itemId) {
+            R.id.history -> {
+                Log.d("test", "Clicked History")
+                val intent = Intent(this, SavedActivity::class.java)
+                startActivity(intent)
+                return true
+            }
+            R.id.news -> {
+                val intent = Intent(this, NewsActivity::class.java)
+                startActivity(intent)
+                return true
+            }
+        }
+        return super.onOptionsItemSelected(item)
     }
 
     private fun showToast(message: String) {
